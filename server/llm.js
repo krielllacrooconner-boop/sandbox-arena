@@ -4,7 +4,7 @@ import { buildSystemPrompt } from './prompt.js';
 
 const DEFAULT_MODELS = {
     anthropic: 'claude-haiku-4-5-20251001',   // rápido y barato; usar claude-sonnet-5 para más creatividad
-    gemini: 'gemini-2.5-flash'
+    gemini: 'gemini-3.5-flash'
 };
 const MAX_TOKENS = 1600;
 
