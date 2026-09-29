@@ -56,7 +56,11 @@ export async function askModel(userPrompt, env, { fetchImpl = fetch, timeoutMs =
             body: JSON.stringify({
                 systemInstruction: { parts: [{ text: system }] },
                 contents,
-                generationConfig: { responseMimeType: 'application/json', maxOutputTokens: MAX_TOKENS }
+                generationConfig: {
+                    responseMimeType: 'application/json',
+                    maxOutputTokens: MAX_TOKENS,
+                    thinkingConfig: { thinkingLevel: 'low' } // tarea simple (llenar un JSON con esquema fijo): no hace falta razonar mucho, y así responde rápido
+                }
             }),
             signal: ctrl.signal
         });
