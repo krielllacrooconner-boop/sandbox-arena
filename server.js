@@ -86,7 +86,7 @@ app.post('/api/power', async (req, res) => {
     }
 
     try {
-        const text = await askModel(prompt, process.env, { timeoutMs: 25000 });
+        const text = await askModel(prompt, process.env, { timeoutMs: 35000 });
         const json = extractJson(text);
         if (!json) return res.status(502).json({ error: 'La IA no devolvió JSON válido.', debug: { rawText: text ? text.slice(0, 500) : null } });
 
