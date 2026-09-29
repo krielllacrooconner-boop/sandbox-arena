@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sandbox Arena 3D</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js CDN (r128) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="relative w-screen h-screen overflow-hidden bg-slate-950">
+
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Crosshair (solo en 1ª persona) -->
+    <div id="crosshair" class="hidden">
+        <div class="w-2.5 h-2.5 bg-emerald-400/90 rounded-full border border-black/80 shadow-sm"></div>
+    </div>
+
+    <!-- UI Overlay -->
+    <div id="game-ui" class="hidden pointer-events-none absolute inset-0 flex flex-col justify-between p-4 z-10">
+
+        <!-- Barra superior -->
+        <div class="flex justify-between items-start w-full">
+            <!-- Info del jugador -->
+            <div class="bg-slate-900/90 backdrop-blur-md border border-slate-800 p-3 rounded-xl pointer-events-auto flex items-center space-x-3 shadow-xl">
+                <div id="ui-avatar" class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-xl font-bold border border-white/20 shadow-inner">
+                    🎮
+                </div>
+                <div>
+                    <div id="ui-username" class="font-bold text-sm text-cyan-300">Jugador</div>
+                    <div class="text-xs text-slate-400 flex items-center gap-2 flex-wrap">
+                        <span>Cámara: <b id="camera-mode-tag" class="text-emerald-400">3ª Persona [V]</b></span>
+                        <span class="text-slate-600">|</span>
+                        <span>FPS: <span id="fps-counter" class="text-yellow-400">--</span></span>
+                        <span class="text-slate-600">|</span>
+                        <span>Red: <b id="net-status" class="text-amber-400">Conectando…</b></span>
+                    </div>
+                    <div id="effects-tag" class="hidden text-[11px] text-amber-300 mt-0.5"></div>
+                </div>
+            </div>
+
+            <!-- Guía de controles -->
+            <div class="bg-slate-900/90 backdrop-blur-md border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-slate-300 space-y-1 shadow-xl pointer-events-auto">
+                <div class="font-semibold text-cyan-400 mb-1 border-b border-slate-800 pb-1 flex items-center gap-1.5">
+                    <i class="fa-solid fa-gamepad"></i> Controles Rápidos
+                </div>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                    <div><span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono text-cyan-300">WASD</span> Mover</div>
+                    <div><span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono text-cyan-300">Shift</span> Correr</div>
+                    <div><span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono text-cyan-300">Espacio</span> Saltar / Subir</div>
+                    <div><span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono text-cyan-300">C</span> Bajar (volando)</div>
+                    <div><span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono text-cyan-300">V</span> Vista 1ª/3ª</div>
+                    <div><span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono text-cyan-300">T / Enter</span> Terminal</div>
+                    <div><span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono text-cyan-300">1-9 / Rueda</span> Elegir ítem</div>
+                    <div><span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono text-cyan-300">Click</span> Usar ítem / capturar ratón</div>
+                    <div><span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono text-cyan-300">Q</span> Guardar ítem</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aviso para capturar el ratón -->
+        <div id="lock-hint" class="absolute top-24 left-1/2 -translate-x-1/2 bg-slate-900/85 border border-slate-700 text-slate-300 text-xs px-4 py-2 rounded-lg pointer-events-none">
+            Haz clic en la pantalla para capturar el ratón · <span class="font-mono text-cyan-300">T</span> o <span class="font-mono text-cyan-300">Enter</span> abre la terminal
+        </div>
+
+        <!-- Ítem equipado + hotbar (se oculta con la terminal abierta) -->
+        <div id="hotbar-wrap" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 pointer-events-none">
+            <div id="item-tag" class="hidden bg-slate-900/85 border border-cyan-500/40 text-cyan-200 text-xs font-mono px-3 py-1 rounded-lg"></div>
+            <div id="hotbar" class="flex gap-1.5"></div>
+        </div>
+
+        <!-- Zona inferior: mensajes recientes + terminal -->
+        <div class="w-full max-w-xl space-y-2">
+            <!-- Mensajes recientes (terminal cerrada) -->
+            <div id="message-feed" class="flex flex-col items-start gap-1"></div>
+
+            <!-- Terminal -->
+            <div id="terminal-container" class="hidden w-full bg-slate-950/90 backdrop-blur-xl border border-emerald-500/30 rounded-xl pointer-events-auto flex flex-col overflow-hidden terminal-glow">
+                <div class="bg-slate-900/90 px-3 py-2 border-b border-emerald-500/20 flex items-center justify-between text-xs font-mono text-emerald-400">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <i class="fa-solid fa-terminal text-emerald-400"></i>
+                        <span>IA COMMAND TERMINAL v2.0</span>
+                    </div>
+                    <div class="text-slate-500 text-[10px]">ESC para cerrar · /help para ayuda</div>
+                </div>
+
+                <div id="terminal-logs" class="h-44 p-3 overflow-y-auto font-mono text-xs space-y-1.5 text-slate-300">
+                    <div class="text-emerald-400/90">[Sistema] Sandbox 3D Multijugador activo.</div>
+                    <div class="text-amber-400/90">[Terminal] Pedí lo que quieras: "dame una pistola láser", "muro", "hazme volar", "lluvia de meteoritos"… (/help)</div>
+                </div>
+
+                <form id="terminal-form" class="flex border-t border-slate-800 bg-slate-900/60 p-2 gap-2" autocomplete="off">
+                    <span class="text-emerald-400 font-mono self-center pl-2 font-bold">&gt;</span>
+                    <input id="terminal-input" type="text" maxlength="160" autocomplete="off" spellcheck="false"
+                        placeholder="dame una pistola láser, hazme volar, lluvia de meteoritos…"
+                        class="w-full bg-transparent text-emerald-300 font-mono text-xs focus:outline-none placeholder-slate-600 px-2 py-1">
+                    <button type="submit" class="bg-emerald-600/30 hover:bg-emerald-600/60 text-emerald-300 border border-emerald-500/40 px-3 py-1 rounded text-xs font-mono transition">
+                        ENVIAR
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de registro -->
+    <div id="registration-modal" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative overflow-hidden glow-effect">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-600/20 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-600/20 rounded-full blur-2xl"></div>
+
+            <div class="relative z-10 text-center space-y-4">
+                <div class="inline-flex p-3 rounded-2xl bg-gradient-to-br from-blue-600/30 to-emerald-600/30 border border-blue-500/30 text-cyan-400 text-3xl mb-1">
+                    <i class="fa-solid fa-cubes-stacked"></i>
+                </div>
+                <h1 class="text-2xl font-black tracking-wide text-white">AI SANDBOX ARENA</h1>
+                <p class="text-xs text-slate-400 max-w-xs mx-auto">Ingresa tu usuario para conectar al servidor 3D multijugador.</p>
+
+                <form id="login-form" class="space-y-4 text-left pt-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Nombre de Usuario</label>
+                        <input id="username-input" type="text" maxlength="15" required autofocus placeholder="Ej. CyberKnight"
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Color de Personaje</label>
+                        <div class="grid grid-cols-5 gap-2" id="color-picker">
+                            <button type="button" data-color="#3b82f6" class="color-btn h-8 rounded-lg bg-blue-500 border-2 border-white transition transform hover:scale-105"></button>
+                            <button type="button" data-color="#10b981" class="color-btn h-8 rounded-lg bg-emerald-500 border-2 border-transparent transition transform hover:scale-105"></button>
+                            <button type="button" data-color="#ef4444" class="color-btn h-8 rounded-lg bg-red-500 border-2 border-transparent transition transform hover:scale-105"></button>
+                            <button type="button" data-color="#8b5cf6" class="color-btn h-8 rounded-lg bg-purple-500 border-2 border-transparent transition transform hover:scale-105"></button>
+                            <button type="button" data-color="#f59e0b" class="color-btn h-8 rounded-lg bg-amber-500 border-2 border-transparent transition transform hover:scale-105"></button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-3 rounded-xl shadow-lg transition transform active:scale-98 flex items-center justify-center gap-2">
+                        <span>Entrar a la Arena</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lógica del juego (módulos ES en /js) -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html> 
