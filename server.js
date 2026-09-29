@@ -104,6 +104,7 @@ app.post('/api/power', async (req, res) => {
         const status = e && e.status && Number.isInteger(e.status) ? e.status : 500;
         console.error('[api/power]', status, e && e.message, e && e.detail);
         if (status === 401 || status === 403) return res.status(503).json({ error: 'La API key de IA configurada no es válida.' });
+        if (status === 404) return res.status(502).json({ error: 'El modelo de IA configurado ya no existe (puede haber sido dado de baja por el proveedor). Revisá LLM_MODEL o actualizá el server.' });
         if (status === 429) return res.status(429).json({ error: 'El proveedor de IA está saturado, esperá un poco.' });
         if (status === 504) return res.status(504).json({ error: 'La IA tardó demasiado en responder.' });
         res.status(500).json({ error: 'Error consultando a la IA.' });
