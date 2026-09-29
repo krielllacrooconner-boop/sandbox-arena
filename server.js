@@ -88,7 +88,7 @@ app.post('/api/power', async (req, res) => {
     try {
         const text = await askModel(prompt, process.env, { timeoutMs: 25000 });
         const json = extractJson(text);
-        if (!json) return res.status(502).json({ error: 'La IA no devolvió JSON válido.' });
+        if (!json) return res.status(502).json({ error: 'La IA no devolvió JSON válido.', debug: { rawText: text ? text.slice(0, 500) : null } });
 
         if (json.unsupported) {
             return res.json({ unsupported: String(json.unsupported).slice(0, 200), suggestion: String(json.suggestion || '').slice(0, 200) });
@@ -103,11 +103,13 @@ app.post('/api/power', async (req, res) => {
     } catch (e) {
         const status = e && e.status && Number.isInteger(e.status) ? e.status : 500;
         console.error('[api/power]', status, e && e.message, e && e.detail);
-        if (status === 401 || status === 403) return res.status(503).json({ error: 'La API key de IA configurada no es válida.' });
-        if (status === 404) return res.status(502).json({ error: 'El modelo de IA configurado ya no existe (puede haber sido dado de baja por el proveedor). Revisá LLM_MODEL o actualizá el server.' });
-        if (status === 429) return res.status(429).json({ error: 'El proveedor de IA está saturado, esperá un poco.' });
-        if (status === 504) return res.status(504).json({ error: 'La IA tardó demasiado en responder.' });
-        res.status(500).json({ error: 'Error consultando a la IA.' });
+        // Debug temporal: le mando al navegador el motivo real para diagnosticar más rápido.
+        const debug = { providerStatus: status, providerMessage: (e && e.message) || null, providerDetail: (e && e.detail) || null };
+        if (status === 401 || status === 403) return res.status(503).json({ error: 'La API key de IA configurada no es válida.', debug });
+        if (status === 404) return res.status(502).json({ error: 'El modelo de IA configurado ya no existe (puede haber sido dado de baja por el proveedor). Revisá LLM_MODEL o actualizá el server.', debug });
+        if (status === 429) return res.status(429).json({ error: 'El proveedor de IA está saturado, esperá un poco.', debug });
+        if (status === 504) return res.status(504).json({ error: 'La IA tardó demasiado en responder.', debug });
+        res.status(500).json({ error: 'Error consultando a la IA.', debug });
     }
 });
 
