@@ -19,6 +19,9 @@ export const state = {
     selectedColor: '#3b82f6',
     baseColor: '#3b82f6',
 
+    device: null,   // 'pc' | 'mobile', elegido en el menú antes de entrar
+    analogMove: { mx: 0, mz: 0 },   // joystick táctil (reemplaza a WASD en celular)
+
     cameraMode: CAMERA_MODES.THIRD_PERSON,
     isPointerLocked: false,
     terminalOpen: false,

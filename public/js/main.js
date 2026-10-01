@@ -12,6 +12,7 @@ import { updatePhysics } from './physics.js';
 import { updateEngine } from './powers/engine.js';
 import { updateItems, selectSlot } from './powers/items.js';
 import { setupInputListeners } from './input.js';
+import { setupMobileControls } from './mobile.js';
 import { setupTerminalUI, checkLLM } from './terminal.js';
 import { connectNetwork, syncLocalPlayer, onPlayersChanged } from './network.js';
 import { addLog, setNetStatus, setUserInfo, setFps, updateLockHint, setCameraTag } from './hud.js';
@@ -53,6 +54,12 @@ function startGame() {
     spawnWorldTargets();
     setupInputListeners();
     setupTerminalUI();
+    if (state.device === 'mobile') {
+        setupMobileControls();
+        $('mobile-controls').classList.remove('hidden');
+        const guide = $('controls-guide');
+        if (guide) guide.classList.add('hidden');
+    }
     window.addEventListener('resize', onWindowResize);
     setCameraTag();
     selectSlot(-1);          // dibuja la hotbar vacía
@@ -61,6 +68,20 @@ function startGame() {
     connectNetwork();        // en segundo plano
     checkLLM();              // ¿el servidor tiene IA?
     requestAnimationFrame(animate);
+}
+
+function chooseDevice(device) {
+    if (state.device) return;   // ya se eligió, no hacer nada si clickean de nuevo
+    state.device = device;
+    if (device === 'mobile') document.body.classList.add('is-mobile');
+    $('device-select-modal').classList.add('hidden');
+    $('registration-modal').classList.remove('hidden');
+    $('username-input').focus();
+}
+
+function setupDeviceSelectFlow() {
+    $('device-pc').addEventListener('click', () => chooseDevice('pc'));
+    $('device-mobile').addEventListener('click', () => chooseDevice('mobile'));
 }
 
 function setupRegistrationFlow() {
@@ -102,8 +123,13 @@ window.addEventListener('error', (ev) => {
     if (shownErrors++ < 3) addLog([{ text: `[Error] ${ev.message}`, cls: 'text-red-400' }]);
 });
 
-if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', setupRegistrationFlow);
-} else {
+function setupMenus() {
+    setupDeviceSelectFlow();
     setupRegistrationFlow();
+}
+
+if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', setupMenus);
+} else {
+    setupMenus();
 }

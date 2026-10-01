@@ -84,3 +84,30 @@ input {
     height: 0;
     background: rgba(2, 6, 23, 0.65);
 }
+.slot { cursor: pointer; }
+
+/* ---------------------------------------------------------------------
+   Controles táctiles (celular)
+--------------------------------------------------------------------- */
+body.is-mobile {
+    /* Evita el rebote/scroll del navegador y el "pull to refresh" mientras se juega */
+    overscroll-behavior: none;
+    touch-action: none;
+}
+#mobile-controls button,
+#joy-base {
+    -webkit-tap-highlight-color: transparent;
+}
+#btn-run.active {
+    border-color: #22d3ee;
+    color: #22d3ee;
+    box-shadow: 0 0 10px rgba(34, 211, 238, 0.35);
+}
+#btn-fire:active,
+#btn-jump:active,
+#btn-down:active {
+    transform: scale(0.94);
+}
+#joy-knob {
+    transition: transform 0.03s linear;
+}

@@ -111,7 +111,7 @@ export function updateCrosshair() {
 
 export function updateLockHint() {
     const el = $('lock-hint');
-    if (el) el.classList.toggle('hidden', state.isPointerLocked || state.terminalOpen);
+    if (el) el.classList.toggle('hidden', state.device === 'mobile' || state.isPointerLocked || state.terminalOpen);
 }
 
 export function setItemTag(text) {

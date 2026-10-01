@@ -33,6 +33,7 @@ export function openTerminal() {
     $('terminal-container').classList.remove('hidden');
     $('message-feed').classList.add('hidden');
     $('hotbar-wrap').classList.add('hidden');
+    if (state.device === 'mobile') $('mobile-controls').classList.add('hidden');
     updateLockHint();
     const input = $('terminal-input');
     input.value = '';
@@ -48,6 +49,7 @@ export function closeTerminal(relock) {
     $('terminal-container').classList.add('hidden');
     $('message-feed').classList.remove('hidden');
     $('hotbar-wrap').classList.remove('hidden');
+    if (state.device === 'mobile') $('mobile-controls').classList.remove('hidden');
     updateLockHint();
     if (relock) requestLock();
 }
@@ -60,6 +62,8 @@ export function setupTerminalUI() {
         closeTerminal(true);
         if (text) handleTerminalInput(text);
     });
+    const closeBtn = $('terminal-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => closeTerminal(true));
 }
 
 // ---------------------------------------------------------------------

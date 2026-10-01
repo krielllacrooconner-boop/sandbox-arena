@@ -16,12 +16,18 @@ export function updatePhysics(dt, now) {
     state.scaleCur += (stats.scale - state.scaleCur) * (1 - Math.exp(-6 * dt));
     state.playerGroup.scale.setScalar(state.scaleCur);
 
-    // Dirección deseada según WASD
+    // Dirección deseada: WASD en PC, joystick analógico en celular (este último permite
+    // velocidad parcial según cuánto se empuje el stick, no solo a fondo como el teclado)
     let mx = 0, mz = 0;
-    if (keys['KeyW']) mz -= 1;
-    if (keys['KeyS']) mz += 1;
-    if (keys['KeyA']) mx -= 1;
-    if (keys['KeyD']) mx += 1;
+    if (state.device === 'mobile') {
+        mx = state.analogMove.mx;
+        mz = state.analogMove.mz;
+    } else {
+        if (keys['KeyW']) mz -= 1;
+        if (keys['KeyS']) mz += 1;
+        if (keys['KeyA']) mx -= 1;
+        if (keys['KeyD']) mx += 1;
+    }
 
     const running = keys['ShiftLeft'] || keys['ShiftRight'];
     const targetSpeed = DEFAULTS.speed * stats.speedMul * (running ? DEFAULTS.runMultiplier : 1.0);
@@ -29,12 +35,13 @@ export function updatePhysics(dt, now) {
     let tx = 0, tz = 0;
     const len = Math.hypot(mx, mz);
     if (len > 0) {
-        mx /= len; mz /= len;
+        const mag = Math.min(len, 1);        // con teclado siempre da 1; con joystick, proporcional
+        const nx = mx / len, nz = mz / len;
         const sin = Math.sin(player.rotationY);
         const cos = Math.cos(player.rotationY);
         // Adelante = (-sin, -cos); derecha = (cos, -sin)
-        tx = (mx * cos + mz * sin) * targetSpeed;
-        tz = (-mx * sin + mz * cos) * targetSpeed;
+        tx = (nx * cos + nz * sin) * targetSpeed * mag;
+        tz = (-nx * sin + nz * cos) * targetSpeed * mag;
     }
 
     // Aceleración suave e independiente de los FPS

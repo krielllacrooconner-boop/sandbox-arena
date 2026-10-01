@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AI Sandbox Arena 3D</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -45,8 +45,8 @@
                 </div>
             </div>
 
-            <!-- Guía de controles -->
-            <div class="bg-slate-900/90 backdrop-blur-md border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-slate-300 space-y-1 shadow-xl pointer-events-auto">
+            <!-- Guía de controles (solo PC; se oculta en celular) -->
+            <div id="controls-guide" class="bg-slate-900/90 backdrop-blur-md border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-slate-300 space-y-1 shadow-xl pointer-events-auto">
                 <div class="font-semibold text-cyan-400 mb-1 border-b border-slate-800 pb-1 flex items-center gap-1.5">
                     <i class="fa-solid fa-gamepad"></i> Controles Rápidos
                 </div>
@@ -88,7 +88,11 @@
                         <i class="fa-solid fa-terminal text-emerald-400"></i>
                         <span>IA COMMAND TERMINAL v2.0</span>
                     </div>
-                    <div class="text-slate-500 text-[10px]">ESC para cerrar · /help para ayuda</div>
+                    <div class="flex items-center gap-2">
+                        <div class="text-slate-500 text-[10px] hidden sm:block">ESC para cerrar · /help para ayuda</div>
+                        <button id="terminal-close" type="button" aria-label="Cerrar terminal"
+                            class="text-slate-500 hover:text-white active:text-white px-2 py-0.5 text-sm leading-none">✕</button>
+                    </div>
                 </div>
 
                 <div id="terminal-logs" class="h-44 p-3 overflow-y-auto font-mono text-xs space-y-1.5 text-slate-300">
@@ -109,8 +113,39 @@
         </div>
     </div>
 
+    <!-- Modal de selección de dispositivo (primer paso) -->
+    <div id="device-select-modal" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative overflow-hidden glow-effect">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-600/20 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-600/20 rounded-full blur-2xl"></div>
+
+            <div class="relative z-10 text-center space-y-5">
+                <div class="inline-flex p-3 rounded-2xl bg-gradient-to-br from-blue-600/30 to-emerald-600/30 border border-blue-500/30 text-cyan-400 text-3xl mb-1">
+                    <i class="fa-solid fa-cubes-stacked"></i>
+                </div>
+                <h1 class="text-2xl font-black tracking-wide text-white">AI SANDBOX ARENA</h1>
+                <p class="text-sm text-slate-400">¿Desde qué dispositivo vas a jugar?</p>
+
+                <div class="grid grid-cols-2 gap-4 pt-1">
+                    <button id="device-pc" type="button"
+                        class="flex flex-col items-center gap-2 bg-slate-950 border border-slate-700 hover:border-cyan-500 active:border-cyan-400 rounded-xl py-6 transition">
+                        <i class="fa-solid fa-desktop text-3xl text-cyan-400"></i>
+                        <span class="text-sm font-semibold text-white">PC</span>
+                        <span class="text-[10px] text-slate-500">Teclado y mouse</span>
+                    </button>
+                    <button id="device-mobile" type="button"
+                        class="flex flex-col items-center gap-2 bg-slate-950 border border-slate-700 hover:border-cyan-500 active:border-cyan-400 rounded-xl py-6 transition">
+                        <i class="fa-solid fa-mobile-screen-button text-3xl text-cyan-400"></i>
+                        <span class="text-sm font-semibold text-white">Celular</span>
+                        <span class="text-[10px] text-slate-500">Controles táctiles</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de registro -->
-    <div id="registration-modal" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
+    <div id="registration-modal" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative overflow-hidden glow-effect">
             <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-600/20 rounded-full blur-2xl"></div>
             <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-600/20 rounded-full blur-2xl"></div>
@@ -146,6 +181,41 @@
                     </button>
                 </form>
             </div>
+        </div>
+    </div>
+
+    <!-- Controles táctiles (solo celular; se muestran por JS si elegís "Celular") -->
+    <div id="mobile-controls" class="hidden fixed inset-0 z-20 pointer-events-none">
+        <!-- Zona de mirar: arrastrar en cualquier parte de la pantalla rota la cámara -->
+        <div id="look-area" class="absolute inset-0 pointer-events-auto touch-none"></div>
+
+        <!-- Joystick de movimiento -->
+        <div id="joy-base" class="absolute z-20 bottom-28 left-6 w-28 h-28 rounded-full bg-slate-900/50 border-2 border-cyan-500/40 pointer-events-auto touch-none">
+            <div id="joy-knob" class="absolute top-1/2 left-1/2 w-12 h-12 -ml-6 -mt-6 rounded-full bg-cyan-500/70 border border-cyan-300/60 shadow-lg"></div>
+        </div>
+
+        <!-- Disparo + salto/bajar, abajo a la derecha -->
+        <div class="absolute z-20 bottom-24 right-6 flex flex-col items-end gap-3 pointer-events-auto">
+            <button id="btn-fire" type="button"
+                class="w-20 h-20 rounded-full bg-red-600/70 border-2 border-red-300/50 text-white font-bold text-[11px] active:bg-red-500/90 touch-none shadow-lg select-none">DISPARAR</button>
+            <div class="flex gap-2">
+                <button id="btn-down" type="button"
+                    class="w-14 h-14 rounded-full bg-slate-800/80 border border-slate-600 text-white text-[10px] font-bold touch-none select-none">BAJAR</button>
+                <button id="btn-jump" type="button"
+                    class="w-14 h-14 rounded-full bg-slate-800/80 border border-slate-600 text-white text-[10px] font-bold touch-none select-none">SALTAR</button>
+            </div>
+        </div>
+
+        <!-- Cámara / correr / terminal / guardar, arriba a la derecha -->
+        <div class="absolute z-20 top-4 right-4 flex flex-col gap-2 items-end pointer-events-auto">
+            <button id="btn-cam" type="button"
+                class="px-3 py-2 rounded-lg bg-slate-900/80 border border-slate-700 text-cyan-300 text-xs font-mono select-none">👁 Cámara</button>
+            <button id="btn-run" type="button"
+                class="px-3 py-2 rounded-lg bg-slate-900/80 border border-slate-700 text-cyan-300 text-xs font-mono select-none">🏃 Correr</button>
+            <button id="btn-terminal" type="button"
+                class="px-3 py-2 rounded-lg bg-slate-900/80 border border-emerald-600/50 text-emerald-300 text-xs font-mono select-none">⌨ Terminal</button>
+            <button id="btn-unequip" type="button"
+                class="px-3 py-2 rounded-lg bg-slate-900/80 border border-slate-700 text-cyan-300 text-xs font-mono select-none">✋ Guardar</button>
         </div>
     </div>
 

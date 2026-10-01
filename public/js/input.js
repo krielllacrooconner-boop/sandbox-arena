@@ -12,9 +12,20 @@ export function setupInputListeners() {
     const canvas = state.renderer.domElement;
 
     canvas.addEventListener('click', () => {
+        if (state.device === 'mobile') return;   // en celular se mira arrastrando, no hace falta Pointer Lock
         if (state.terminalOpen) closeTerminal(false);
         requestLock();
     });
+
+    // Tocar/clickear un slot de la hotbar lo selecciona (sirve tanto con mouse como con el dedo)
+    const hotbar = document.getElementById('hotbar');
+    if (hotbar) {
+        hotbar.addEventListener('click', (e) => {
+            const slotEl = e.target.closest('.slot');
+            if (!slotEl) return;
+            selectSlot(parseInt(slotEl.dataset.slot, 10));
+        });
+    }
 
     document.addEventListener('pointerlockchange', () => {
         state.isPointerLocked = (document.pointerLockElement === canvas);
