@@ -5,12 +5,12 @@
 //  Además hay que habilitar "Authentication -> Anonymous" y crear la base Firestore.
 // =====================================================================
 export const firebaseConfig = {
-    apiKey: 'demo',
-    authDomain: 'demo.firebaseapp.com',
-    projectId: 'demo',
-    storageBucket: 'demo.appspot.com',
-    messagingSenderId: '123456789',
-    appId: '1:123456789:web:demo'
+    apiKey: 'AIzaSyDAHHnHG5mExkze7QIDOfCZbWKE8WLpbdI',
+    authDomain: 'sandbox-arena-646aa.firebaseapp.com',
+    projectId: 'sandbox-arena-646aa',
+    storageBucket: 'sandbox-arena-646aa.firebasestorage.app',
+    messagingSenderId: '968775901513',
+    appId: '1:968775901513:web:e4af7455651a96fcc27a98'
 };
 
 export const APP_ID = 'ai-sandbox-arena';
